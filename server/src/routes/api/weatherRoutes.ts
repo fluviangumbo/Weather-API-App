@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import path from 'node:path';
 const router = Router();
 
 import HistoryService from '../../service/historyService.js';
@@ -6,19 +7,18 @@ import WeatherService from '../../service/weatherService.js';
 
 // TODO: POST Request with city name to retrieve weather data
 router.post('/', async (req: Request, res: Response) => {
-  const resp = await fetch(`${process.env.API_BASE_URL}?key=${process.env.API_KEY}`); //need to finish this url, req.body
-  console.log(req.body);
-  const data = res.json(resp);
-  console.log(data);
-  // TODO: GET weather data from city name
-  // TODO: save city to search history
-
-  return res.json({});
-  
+  try {
+    const weather = await WeatherService.getWeatherForCity(req.body.cityName);
+    await HistoryService.addCity(req.body.cityName);
+    res.status(200).json(weather);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
 });
 
 // TODO: GET search history
-router.get('/history', async (req: Request, res: Response) => {
+router.get('/history', async (_req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../../db/searchHistory.json')); //doesn't seem right
 });
 
@@ -26,7 +26,7 @@ router.get('/history', async (req: Request, res: Response) => {
 router.delete('/history/:id', async (req: Request, res: Response) => {
   const cityID = req.params.id;
   res.json();
-  req.removeCity(cityID);
+  await HistoryService.removeCity(cityID);
 });
 
 export default router;

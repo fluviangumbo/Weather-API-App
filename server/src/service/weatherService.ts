@@ -55,7 +55,7 @@ class WeatherService {
 
   // TODO: Create fetchLocationData method
   private async fetchLocationData(query: string) {
-    const getCoordinates = this.buildGeocodeQuery(query);
+    const getCoordinates = await this.buildGeocodeQuery(query);
     const location = await fetch(getCoordinates);
     return location.json(); //returns a JSON object
   }
@@ -67,8 +67,9 @@ class WeatherService {
   }
 
   // TODO: Create buildGeocodeQuery method
-  private buildGeocodeQuery(query: string): string { //not sure on return type
-    return `${this.baseURL}/geo/1.0/direct?q=${query}&limit=3&appid=${this.apiKey}`;
+  private async buildGeocodeQuery(query: string): Promise<string> { //not sure on return type
+    const geoQuery = `${this.baseURL}/geo/1.0/direct?q=${query}&limit=5&appid=${this.apiKey}`;
+    return geoQuery;
   }
 
   // TODO: Create buildWeatherQuery method
@@ -102,7 +103,7 @@ class WeatherService {
   }
 
   // TODO: Complete buildForecastArray method
-  private buildForecastArray(currentWeather: Weather, weatherData: any[]) {
+  private buildForecastArray(weatherData: any[]) {
     const forecast = [];
     for (const day of weatherData) {
       const temp = day.main.temp;
@@ -114,14 +115,26 @@ class WeatherService {
       const iconDesc = day.weather[0].description;
       forecast.push({temp, wind, humidity, city, date, icon, iconDesc});
     }
-
-    return forecast;
   }
 
   // TODO: Complete g``etWeatherForCity method
   async getWeatherForCity(city: string) {
+    this.cityName = city;
+    const coordinates = await this.fetchAndDestructureLocationData();
+    if (!coordinates) {
+      throw new Error ('Failed ot fetch location data.');
+    }
 
+    const weather = await this.fetchWeatherData(coordinates);
+    if (!weather) {
+      throw new Error('Failed ot fetch weather data.');
+    }
+
+    const cityWeather = this.parseCurrentWeather(weather);
+    const cityForecast = this.buildForecastArray(weather);
+
+    return { cityWeather, cityForecast };
   }
 }
 
-export default new WeatherService();
+export default new WeatherService(`${process.env.API_BASE_URL}`, `${process.env.API_KEY}`, '');
