@@ -20,14 +20,17 @@ class HistoryService {
 
   // TODO: Define a read method that reads from the searchHistory.json file
   private async read(): Promise<City[]> {
-    const data: string = await fs.readFile('../../db/searchHistory.json', 'utf8');
-    const history: City[] = JSON.parse(data);
+    const data = await fs.readFile('./db/searchHistory.json', 'utf8');
+    let history: City[] = [];
+    if (data) {
+      history = JSON.parse(data);
+    }
     return history;
   }
 
   // TODO: Define a write method that writes the updated cities array to the searchHistory.json file
   private async write(cities: City[]) {
-    fs.writeFile('../../db/searchHistory.json', (JSON.stringify(cities)));
+    fs.writeFile('./db/searchHistory.json', (JSON.stringify(cities)));
   }
   //YOU HAVE BEEN DOING THIS AS THOUGH DATA HAS TO BE STORED AS A HistoryService OBJECT - correct? there are nonsequitor logic sections of this service page so far
 
@@ -49,18 +52,16 @@ class HistoryService {
   }
 
   // * BONUS TODO: Define a removeCity method that removes a city from the searchHistory.json file
-  async removeCity(id: string): Promise<City[]> {
+  async removeCity(id: string) {
     const oldList: City[] = await this.getCities();
 
     for (const city of oldList) {
       if (id === city.id) {
         const index = oldList.indexOf(city);
         oldList.splice(index, 1);
-        return oldList;
       }
     }
-
-    return oldList;
+    this.write(oldList);
   }
 }
 
